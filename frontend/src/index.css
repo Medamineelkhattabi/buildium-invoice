@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+:root { font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; color-scheme: light dark; color: #213547; background-color: #ffffff; }
+
+* { box-sizing: border-box; }
+
+body { margin: 0; padding: 0; }
+
+input, button { padding: 8px; font-size: 14px; }
+
+button { cursor: pointer; }
