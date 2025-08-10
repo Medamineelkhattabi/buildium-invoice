@@ -32,9 +32,11 @@ app.use(cors({
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
-// Static serve generated PDFs
-app.use('/static/pdfs', express.static(path.join(__dirname, 'storage', 'pdfs')));
-app.use('/static/exports', express.static(path.join(__dirname, 'storage', 'exports')));
+// Static serve generated PDFs (désactivé sur Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/static/pdfs', express.static(path.join(__dirname, 'storage', 'pdfs')));
+  app.use('/static/exports', express.static(path.join(__dirname, 'storage', 'exports')));
+}
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -56,8 +58,12 @@ app.use('/auth', authRouter);
 app.use('/invoices', authenticate, invoicesRouter);
 
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
+  res.status(err.status || 500).json({ 
+    message: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+  });
 });
 
 // Connexion à la base de données

@@ -46,17 +46,28 @@ export function getSenderFixed() {
 }
 
 export async function generateInvoicePdf({ invoiceNumber, date, supplier, lines, totals }) {
-  const pdfsDir = path.join(__dirname, '..', 'storage', 'pdfs');
-  if (!fs.existsSync(pdfsDir)) {
-    fs.mkdirSync(pdfsDir, { recursive: true });
-  }
-
   const filename = `${invoiceNumber}.pdf`;
-  const filePath = path.join(pdfsDir, filename);
-
   const doc = new PDFDocument({ size: 'A4', margin: 30 });
-  const stream = fs.createWriteStream(filePath);
-  doc.pipe(stream);
+  
+  let pdfBuffer;
+  
+  if (process.env.NODE_ENV === 'production') {
+    // En production (Vercel), utiliser un buffer
+    const buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      pdfBuffer = Buffer.concat(buffers);
+    });
+  } else {
+    // En développement, sauvegarder le fichier
+    const pdfsDir = path.join(__dirname, '..', 'storage', 'pdfs');
+    if (!fs.existsSync(pdfsDir)) {
+      fs.mkdirSync(pdfsDir, { recursive: true });
+    }
+    const filePath = path.join(pdfsDir, filename);
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+  }
 
   // Couleurs élégantes
   const primaryColor = '#2c3e50';
@@ -333,11 +344,19 @@ export async function generateInvoicePdf({ invoiceNumber, date, supplier, lines,
 
   doc.end();
 
-  await new Promise((resolve, reject) => {
-    stream.on('finish', resolve);
-    stream.on('error', reject);
-  });
-
-  const publicUrl = `/static/pdfs/${filename}`;
-  return { filePath, publicUrl };
+  if (process.env.NODE_ENV === 'production') {
+    // Attendre que le buffer soit prêt
+    await new Promise((resolve) => {
+      doc.on('end', resolve);
+    });
+    return { filename, buffer: pdfBuffer, url: null };
+  } else {
+    // Attendre que le fichier soit écrit
+    await new Promise((resolve, reject) => {
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+    });
+    const publicUrl = `/static/pdfs/${filename}`;
+    return { filePath, publicUrl };
+  }
 }

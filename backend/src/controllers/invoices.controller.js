@@ -102,7 +102,7 @@ export async function createInvoice(req, res, next) {
     const { computedLines, totals } = computeTotals(lines);
     const invoiceNumber = await generateInvoiceNumber();
 
-    const { filePath, publicUrl } = await generateInvoicePdf({
+    const pdfResult = await generateInvoicePdf({
       invoiceNumber,
       date,
       supplier,
@@ -118,8 +118,8 @@ export async function createInvoice(req, res, next) {
       lines: computedLines,
       totals,
       pdf: {
-        url: publicUrl,
-        diskPath: filePath,
+        url: pdfResult.publicUrl || null,
+        diskPath: pdfResult.filePath || null,
       },
     });
 
@@ -135,14 +135,30 @@ export async function getInvoicePdf(req, res, next) {
     const invoice = await Invoice.findById(id).lean();
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-    const diskPath = invoice.pdf?.diskPath;
-    if (!diskPath || !fs.existsSync(diskPath)) {
-      return res.status(404).json({ message: 'PDF not found' });
-    }
+    if (process.env.NODE_ENV === 'production') {
+      // En production (Vercel), regénérer le PDF
+      const pdfResult = await generateInvoicePdf({
+        invoiceNumber: invoice.invoiceNumber,
+        date: invoice.createdAt,
+        supplier: invoice.supplier,
+        lines: invoice.lines,
+        totals: invoice.totals
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfResult.buffer);
+    } else {
+      // En développement, servir le fichier
+      const diskPath = invoice.pdf?.diskPath;
+      if (!diskPath || !fs.existsSync(diskPath)) {
+        return res.status(404).json({ message: 'PDF not found' });
+      }
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=${path.basename(diskPath)}`);
-    fs.createReadStream(diskPath).pipe(res);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename=${path.basename(diskPath)}`);
+      fs.createReadStream(diskPath).pipe(res);
+    }
   } catch (err) {
     next(err);
   }
