@@ -26,6 +26,7 @@ Créer `backend/api/index.js` (point d'entrée Vercel):
    ADMIN_EMAIL=admin@buildium.ma
    ADMIN_PASSWORD_HASH=$2b$12$waQKMt/VO5gmX7MoFnhFiOM.aTvubhbL6ZOxAv16MjJH/bxEn.rKy
    JWT_SECRET=buildium_super_secret_key_2024_change_in_production
+   FRONTEND_URL=https://buildium-invoice-yene.vercel.app
    ```
 6. **Deploy** → URL: `https://buildium-backend.vercel.app`
 
