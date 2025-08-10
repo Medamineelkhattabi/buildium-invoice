@@ -51,6 +51,11 @@ const InvoiceSchema = new mongoose.Schema(
       url: { type: String, required: true },
       diskPath: { type: String, required: true },
     },
+    status: {
+      type: String,
+      enum: ['pending', 'resolved', 'not_resolved'],
+      default: 'pending'
+    },
   },
   { timestamps: true }
 );

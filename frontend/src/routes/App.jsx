@@ -1,18 +1,27 @@
 import { Link, Outlet, NavLink } from 'react-router-dom';
 
-export default function App() {
+export default function App({ user, onLogout }) {
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 20 }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link to="/" style={{ textDecoration: 'none', color: '#111' }}>
-          <h2>Buildium - Factures</h2>
+    <div className="app-container">
+      <header className="header">
+        <Link to="/" className="logo-title">
+          Buildium - Factures
         </Link>
-        <nav style={{ display: 'flex', gap: 12 }}>
-          <NavLink to="/" end>Historique</NavLink>
-          <NavLink to="/new">Créer une facture</NavLink>
-        </nav>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <nav className="nav">
+            <NavLink to="/" end className="nav-link">Historique</NavLink>
+            <NavLink to="/new" className="nav-link">Créer</NavLink>
+            <NavLink to="/reports" className="nav-link">Rapports</NavLink>
+          </nav>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '13px', color: '#6c757d' }}>{user?.name}</span>
+            <button className="btn btn-secondary" onClick={onLogout} style={{ padding: '6px 12px', fontSize: '12px' }}>
+              Déconnexion
+            </button>
+          </div>
+        </div>
       </header>
-      <main style={{ marginTop: 24 }}>
+      <main className="main-content">
         <Outlet />
       </main>
     </div>

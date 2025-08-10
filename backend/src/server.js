@@ -6,6 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectToDatabase } from './config/database.js';
 import invoicesRouter from './routes/invoices.routes.js';
+import authRouter from './routes/auth.routes.js';
+import { authenticate } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -15,18 +17,24 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({ origin: '*'}));
+app.use(cors({ 
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-domain.com', 'https://www.your-domain.com']
+    : '*'
+}));
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
 // Static serve generated PDFs
-app.use('/static/pdfs', express.static(path.join(__dirname, '..', 'storage', 'pdfs')));
+app.use('/static/pdfs', express.static(path.join(__dirname, 'storage', 'pdfs')));
+app.use('/static/exports', express.static(path.join(__dirname, 'storage', 'exports')));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/invoices', invoicesRouter);
+app.use('/auth', authRouter);
+app.use('/invoices', authenticate, invoicesRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
