@@ -115,9 +115,7 @@ export default function Login({ onLogin }) {
           fontSize: '12px',
           color: '#6c757d'
         }}>
-          <strong>Identifiants par défaut :</strong><br/>
-          Email: admin@buildium.ma<br/>
-          Mot de passe: buildium2024
+          
         </div>
       </div>
     </div>

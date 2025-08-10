@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cors({ 
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.com', 'https://www.your-domain.com']
+    ? [process.env.FRONTEND_URL || 'https://buildium-app.netlify.app', 'http://localhost:5173']
     : '*'
 }));
 app.use(express.json({ limit: '2mb' }));
@@ -28,6 +28,18 @@ app.use(morgan('dev'));
 // Static serve generated PDFs
 app.use('/static/pdfs', express.static(path.join(__dirname, 'storage', 'pdfs')));
 app.use('/static/exports', express.static(path.join(__dirname, 'storage', 'exports')));
+
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Buildium API is running',
+    status: 'ok',
+    endpoints: {
+      auth: '/auth/login',
+      invoices: '/invoices',
+      health: '/health'
+    }
+  });
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -41,13 +53,17 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
-connectToDatabase()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Backend running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
-    process.exit(1);
+// Connexion à la base de données
+connectToDatabase().catch((err) => {
+  console.error('Failed to connect to MongoDB', err);
+});
+
+// Pour le développement local
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Backend running on port ${PORT}`);
   });
+}
+
+// Export pour Vercel
+export default app;
